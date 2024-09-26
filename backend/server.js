@@ -5,7 +5,7 @@ dotenv.config();
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const app = express();
 app.use(express.json());
-app.use('/beepers', routerBeepers);
+app.use('/api/beepers', routerBeepers);
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

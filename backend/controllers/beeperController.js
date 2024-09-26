@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { getAllBeepers, addBeeper, getBeeperById } from "../service/bepperService.js";
+import { getAllBeepers, addBeeper, getBeeperById, deleteBeeper, getBeeperByStatus, editBeeperStatus, detonateBeeper } from "../service/bepperService.js";
 export const getAllBeepersController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield getAllBeepers();
@@ -22,7 +22,7 @@ export const getAllBeepersController = (req, res) => __awaiter(void 0, void 0, v
 });
 export const getById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { bepperId } = req.params;
+        const bepperId = req.params.id;
         if (!bepperId) {
             res.status(400).json({ error: 'beeper ID is required.' });
         }
@@ -38,11 +38,75 @@ export const getById = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 export const createBeeper = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const beeper = req.body;
+        const beeper = req.body.name;
         const createdBeeper = yield addBeeper(beeper);
-        res.status(201).send({ beeper: beeper });
+        res.status(201).send({ beeper: createdBeeper });
     }
     catch (error) {
         res.status(500).send({ message: "Error create", error });
+    }
+});
+export const deleteBeeperController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const beeperId = req.params.id;
+        if (!beeperId) {
+            res.status(400).json({ error: 'beeper ID is required.' });
+        }
+        const deletedBeeper = yield deleteBeeper(beeperId);
+        if (deletedBeeper) {
+            res.status(200).json({ message: "Beeper deleted successfully." });
+        }
+        else {
+            res.status(404).json({ error: "beeper not found." });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to delete the beeper' });
+    }
+});
+export const getByStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const bepperStatus = req.params.status;
+        if (!bepperStatus) {
+            res.status(400).json({ error: 'beeper Status is required.' });
+        }
+        const bepperList = yield getBeeperByStatus(bepperStatus);
+        if (bepperList.length === 0) {
+            res.status(404).json({ message: 'No beepers found with this status.' });
+        }
+        res.status(200).json({ bepperList });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+});
+export const editByIdController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const bepperId = req.params.id;
+        if (!bepperId) {
+            res.status(400).json({ error: 'beeper ID is required.' });
+        }
+        const bepper = yield getBeeperById(bepperId);
+        if (!bepper) {
+            res.status(404).json({ message: 'No beeper found.' });
+        }
+        const updatedBeeper = yield editBeeperStatus(bepper);
+        if (!updatedBeeper) {
+            res.status(404).json({ message: 'No beeper found.' });
+        }
+        if (updatedBeeper.status === "deployed") {
+            const { lat, lon } = req.body;
+            if (!lat || !lon) {
+                res.status(400).json({ error: "lat and lon are required." });
+            }
+            const detonatedBeeper = yield detonateBeeper(updatedBeeper, parseInt(lat), parseInt(lon));
+            if (!detonatedBeeper) {
+                res.status(404).json({ message: 'No beeper.' });
+            }
+        }
+        res.status(200).json({ bepper });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Internal Server Error', error });
     }
 });
