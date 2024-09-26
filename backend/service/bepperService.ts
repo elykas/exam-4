@@ -60,20 +60,22 @@ export const getBeeperById = async (beeperId: string): Promise<Beeper> => {
 
 const status = [StatusBeeper.manufactured,StatusBeeper.assembled,StatusBeeper.shipped,StatusBeeper.deployed]
 
-export const editBeeperStatus = async(beeper:Beeper): Promise<Beeper> =>{
+export const editBeeperStatus = async(beeperId:string): Promise<Beeper> =>{
     const beepers: Beeper[] = await readFromFile();
 
     if (beepers.length === 0) {
         throw new Error('No beepers found');
     }
 
+    const beeper = beepers.find(b => b.id === beeperId);
+
+    if (!beeper) {
+        throw new Error('Beeper not found');
+    }
+
     const actualStatus = status.findIndex(s => s === beeper.status)
     if(actualStatus === -1){
         throw new Error('No status found');
-    }
-
-    if(actualStatus === status.length -1){
-
     }
 
     beeper.status = status[actualStatus +1];
@@ -82,8 +84,19 @@ export const editBeeperStatus = async(beeper:Beeper): Promise<Beeper> =>{
     return beeper;
 }
 
-export const detonateBeeper = async(beeper:Beeper,lat:number,lon:number):Promise<Beeper> =>{
+export const detonateBeeper = async(beeperId:string,lat:number,lon:number):Promise<Beeper> =>{
+
+    const beepers = await readFromFile() as Beeper[];
+        if (beepers.length === 0) {
+            throw new Error('No beepers found');
+        }
         
+        const beeper = beepers.find(b => b.id === beeperId);
+
+        if (!beeper) {
+            throw new Error('Beeper not found');
+        }
+
         const location = coordinates.find((l: {lat:number,lon:number}) => l.lat === lat && l.lon === lon)
         if(!location){
             throw new Error('No loa and lat found');
@@ -95,14 +108,32 @@ export const detonateBeeper = async(beeper:Beeper,lat:number,lon:number):Promise
         setTimeout(() => {
             beeper.status = StatusBeeper.detonated;
             beeper.detonated_at = new Date();
+             writeToFile(beepers)
         }, 10000);
 
-        const beepers = await readFromFile();
-        if (beepers.length === 0) {
-            throw new Error('No beepers found');
-        }
+        
         await writeToFile(beepers)
         return beeper
+}
+
+
+export const editBeeperToDBJson = async (beeper:Beeper): Promise<Beeper> => {
+    const beepers: Beeper[] = await readFromFile();
+    if(!beepers){
+        throw new Error("beepers does not exist")
+    }
+    const editBeeper = beepers.find(b => b.id === beeper.id);
+    if(!editBeeper){
+        throw new Error("The beeper was not found");
+    }
+    editBeeper.status = beeper.status
+    if(beeper.latitude && beeper.longitude && beeper.detonated_at){
+    editBeeper.latitude = beeper.latitude
+    editBeeper.longitude = beeper.longitude
+    editBeeper.detonated_at = beeper.detonated_at
+    }
+    await writeToFile(beepers);
+    return beeper;
 }
     
 

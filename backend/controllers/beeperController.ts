@@ -109,13 +109,7 @@ export const editByIdController = async(req: Request, res:Response):Promise<void
            res.status(400).json({ error: 'beeper ID is required.' });
       }
 
-      const bepper = await getBeeperById(bepperId);
-
-      if (!bepper) {
-          res.status(404).json({ message: 'No beeper found.' });
-        }
-
-      const updatedBeeper = await editBeeperStatus(bepper);
+      const updatedBeeper = await editBeeperStatus(bepperId);
      
       if(!updatedBeeper){
         res.status(404).json({ message: 'No beeper found.' });
@@ -126,13 +120,18 @@ export const editByIdController = async(req: Request, res:Response):Promise<void
           if(!lat || !lon){
              res.status(400).json({ error: "lat and lon are required." });
           }
-          const detonatedBeeper = await detonateBeeper(updatedBeeper,parseInt(lat),parseInt(lon))
+          const detonatedBeeper = await detonateBeeper(updatedBeeper.id,parseFloat(lat),parseFloat(lon))
           if(!detonatedBeeper){
             res.status(404).json({ message: 'No beeper.' });
+            return;
+          }
+          else{
+            res.status(200).json({detonatedBeeper})
+            return;
           }
       }
 
-      res.status(200).json({bepper})
+      res.status(200).json({updatedBeeper})
       
   } catch (error) {
       res.status(500).json({message: 'Internal Server Error', error});    

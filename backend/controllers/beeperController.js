@@ -86,11 +86,7 @@ export const editByIdController = (req, res) => __awaiter(void 0, void 0, void 0
         if (!bepperId) {
             res.status(400).json({ error: 'beeper ID is required.' });
         }
-        const bepper = yield getBeeperById(bepperId);
-        if (!bepper) {
-            res.status(404).json({ message: 'No beeper found.' });
-        }
-        const updatedBeeper = yield editBeeperStatus(bepper);
+        const updatedBeeper = yield editBeeperStatus(bepperId);
         if (!updatedBeeper) {
             res.status(404).json({ message: 'No beeper found.' });
         }
@@ -99,12 +95,17 @@ export const editByIdController = (req, res) => __awaiter(void 0, void 0, void 0
             if (!lat || !lon) {
                 res.status(400).json({ error: "lat and lon are required." });
             }
-            const detonatedBeeper = yield detonateBeeper(updatedBeeper, parseInt(lat), parseInt(lon));
+            const detonatedBeeper = yield detonateBeeper(updatedBeeper.id, parseFloat(lat), parseFloat(lon));
             if (!detonatedBeeper) {
                 res.status(404).json({ message: 'No beeper.' });
+                return;
+            }
+            else {
+                res.status(200).json({ detonatedBeeper });
+                return;
             }
         }
-        res.status(200).json({ bepper });
+        res.status(200).json({ updatedBeeper });
     }
     catch (error) {
         res.status(500).json({ message: 'Internal Server Error', error });
